@@ -27,7 +27,14 @@ The app listens on 127.0.0.1 only, so it can't be reached from other devices on 
 
 ## Back up
 
-**Export button (recommended).** Click **Export Backup** in the header. This downloads
+**Automatic backups.** Set `BACKUP_DIR` in `.env.local` to a folder of your choice. The first time
+the dashboard loads after the server starts, Fintra writes
+`fintra-backup-YYYY-MM-DD_HH-mm.json` there, in the same format as the Export button. Click
+**Backup now** in the header to take one at any time. The newest 30 are kept. Older files with that
+exact name pattern are removed, and nothing else in the folder is touched. If a backup fails, a
+warning appears at the top of the dashboard.
+
+**Export button.** Click **Export Backup** in the header. This downloads
 `fintra-backup-YYYY-MM-DD.json` in the same format as `data/fintra-backup.json`.
 
 **mongodump.** This needs the separate

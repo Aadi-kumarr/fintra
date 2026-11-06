@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, Moon, Plus, Sun, Upload, Wallet } from "lucide-react";
+import {
+  DatabaseBackup,
+  Download,
+  Loader2,
+  Moon,
+  Plus,
+  Sun,
+  TriangleAlert,
+  Upload,
+  Wallet,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -18,7 +28,7 @@ import {
   PAYMENT_METHODS,
 } from "@/lib/constants";
 import { fetchJson, sendJson } from "@/lib/fetch-json";
-import { fromDateKey, getPeriodRange, PERIODS } from "@/lib/format";
+import { formatDateTime, fromDateKey, getPeriodRange, PERIODS } from "@/lib/format";
 
 const DEFAULT_OPTIONS = {
   expenseCategories: EXPENSE_CATEGORIES,
@@ -52,6 +62,8 @@ export function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [dialog, setDialog] = useState({ open: false, transaction: null });
   const [importing, setImporting] = useState(false);
+  const [backup, setBackup] = useState({ lastBackup: null, error: null });
+  const [backingUp, setBackingUp] = useState(false);
   const fileInput = useRef(null);
 
   const range = useMemo(
@@ -82,6 +94,27 @@ export function Dashboard() {
 
     return () => controller.abort();
   }, [range, refreshKey]);
+
+  useEffect(() => {
+    fetchJson("/api/backup")
+      .then(setBackup)
+      .catch((err) => setBackup((current) => ({ ...current, error: err.message })));
+  }, []);
+
+  async function handleBackup() {
+    setBackingUp(true);
+    try {
+      const status = await sendJson("/api/backup", "POST", {});
+      setBackup(status);
+      if (status.error) toast.error("Backup failed", { description: status.error });
+      else toast.success("Backup saved", { description: status.lastBackup.file });
+    } catch (err) {
+      setBackup((current) => ({ ...current, error: err.message }));
+      toast.error("Backup failed", { description: err.message });
+    } finally {
+      setBackingUp(false);
+    }
+  }
 
   async function handleImport(event) {
     const file = event.target.files?.[0];
@@ -114,6 +147,15 @@ export function Dashboard() {
           <h1 className="text-xl font-semibold tracking-tight">Fintra</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {backup.lastBackup
+              ? `Last backup: ${formatDateTime(backup.lastBackup.at)}`
+              : "Last backup: none yet"}
+          </span>
+          <Button variant="outline" disabled={backingUp} onClick={handleBackup}>
+            {backingUp ? <Loader2 className="animate-spin" /> : <DatabaseBackup />}
+            Backup now
+          </Button>
           <Button onClick={() => setDialog({ open: true, transaction: null })}>
             <Plus />
             Add Transaction
@@ -138,6 +180,16 @@ export function Dashboard() {
           <ThemeToggle />
         </div>
       </header>
+
+      {backup.error && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"
+        >
+          <TriangleAlert className="size-4 shrink-0 text-destructive" />
+          <span>Backup failed: {backup.error}</span>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1" role="group" aria-label="Period">
