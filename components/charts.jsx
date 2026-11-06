@@ -93,7 +93,7 @@ function CategoryTooltip({ active, payload, total }) {
 }
 
 function CategoryDonut({ categories, total }) {
-  if (categories.length === 0) return <EmptyChart message="No expenses in this period" />;
+  if (categories.length === 0) return <EmptyChart message="No spending in this period" />;
 
   const slices = categories.map((category) => ({
     ...category,
@@ -226,7 +226,7 @@ function DailyTooltip({ active, payload }) {
 
 function DailyTrend({ daily }) {
   if (!daily.some((day) => day.amount > 0)) {
-    return <EmptyChart message="No expenses in this period" />;
+    return <EmptyChart message="No spending in this period" />;
   }
 
   return (
@@ -257,8 +257,8 @@ export function Charts({ stats, monthly, range }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <ChartCard title="Expenses by category" description="Selected period">
-        <CategoryDonut categories={stats.byCategory} total={stats.totals.expense} />
+      <ChartCard title="Spending by category" description="Selected period">
+        <CategoryDonut categories={stats.byCategory} total={stats.totals.spending} />
       </ChartCard>
       <ChartCard
         title="Monthly income vs expense"

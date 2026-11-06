@@ -1,6 +1,6 @@
 import { ApiError, route } from "@/lib/api";
 import { getTransactions } from "@/lib/mongo";
-import { parseDateRange, sumAmounts } from "@/lib/transactions";
+import { isInvestment, isSpending, parseDateRange, sumAmounts } from "@/lib/transactions";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +36,13 @@ function monthlyTotals(docs) {
   }
 }
 
-function dailyExpenses(expenses, range) {
-  const days = expenses.map((doc) => doc.date.slice(0, 10)).sort();
+function dailySpending(spendingDocs, range) {
+  const days = spendingDocs.map((doc) => doc.date.slice(0, 10)).sort();
   const start = range.from ?? days[0];
   const end = range.to ?? days.at(-1);
   if (!start || !end) return [];
 
-  const byDay = Map.groupBy(expenses, (doc) => doc.date.slice(0, 10));
+  const byDay = Map.groupBy(spendingDocs, (doc) => doc.date.slice(0, 10));
   const result = [];
   for (let time = Date.parse(start); time <= Date.parse(end); time += DAY_MS) {
     const date = new Date(time).toISOString().slice(0, 10);
@@ -63,23 +63,29 @@ export const GET = route(async (request) => {
 
   const expenses = docs.filter((doc) => doc.type === "expense");
   const incomes = docs.filter((doc) => doc.type === "income");
+  const spendingDocs = docs.filter(isSpending);
 
   const income = sumAmounts(incomes);
   const expense = sumAmounts(expenses);
-  const net = Math.round((income - expense) * 100) / 100;
+  const spending = sumAmounts(spendingDocs);
+  const invested = sumAmounts(docs.filter(isInvestment));
+  // Invested money is still saved, so only spending reduces net savings.
+  const net = Math.round((income - spending) * 100) / 100;
 
   return Response.json({
     totals: {
       income,
       expense,
+      spending,
+      invested,
       net,
       savingsRate: income > 0 ? Math.round((net / income) * 10000) / 100 : null,
       count: docs.length,
     },
-    byCategory: groupTotals(expenses, "category"),
+    byCategory: groupTotals(spendingDocs, "category"),
     byPaymentMethod: groupTotals(expenses, "paymentMethod"),
     bySource: groupTotals(incomes, "source"),
     monthly: monthlyTotals(docs),
-    daily: dailyExpenses(expenses, range),
+    daily: dailySpending(spendingDocs, range),
   });
 });
