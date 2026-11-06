@@ -32,7 +32,8 @@ const CATEGORY_COLORS = {
 };
 const OTHER_COLOR = "var(--series-other)";
 const INCOME_COLOR = "var(--series-1)";
-const EXPENSE_COLOR = "var(--series-2)";
+const SPENDING_COLOR = "var(--series-2)";
+const INVESTED_COLOR = CATEGORY_COLORS.Investments;
 
 const AXIS_PROPS = {
   axisLine: false,
@@ -143,14 +144,15 @@ function CategoryDonut({ categories, total }) {
 
 function MonthlyTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
-  const { month, income, expense } = payload[0].payload;
+  const { month, income, spending, invested, net } = payload[0].payload;
   return (
     <TooltipBox
       title={formatMonth(month)}
       rows={[
         { label: "Income", value: formatINR(income), color: INCOME_COLOR },
-        { label: "Expense", value: formatINR(expense), color: EXPENSE_COLOR },
-        { label: "Net", value: formatINR(income - expense) },
+        { label: "Spending", value: formatINR(spending), color: SPENDING_COLOR },
+        { label: "Invested", value: formatINR(invested), color: INVESTED_COLOR },
+        { label: "Net", value: formatINR(net) },
       ]}
     />
   );
@@ -179,7 +181,8 @@ function MonthlyBars({ monthly, range }) {
     <div className="flex flex-col gap-3">
       <div className="flex gap-4 text-sm text-muted-foreground">
         <LegendItem color={INCOME_COLOR} label="Income" />
-        <LegendItem color={EXPENSE_COLOR} label="Expense" />
+        <LegendItem color={SPENDING_COLOR} label="Spending" />
+        <LegendItem color={INVESTED_COLOR} label="Invested" />
       </div>
       <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
@@ -190,6 +193,7 @@ function MonthlyBars({ monthly, range }) {
             <Tooltip content={<MonthlyTooltip />} cursor={{ fill: "var(--muted)" }} />
             <Bar
               dataKey="income"
+              stackId="incoming"
               fill={INCOME_COLOR}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
@@ -198,8 +202,18 @@ function MonthlyBars({ monthly, range }) {
               {barCells}
             </Bar>
             <Bar
-              dataKey="expense"
-              fill={EXPENSE_COLOR}
+              dataKey="spending"
+              stackId="outgoing"
+              fill={SPENDING_COLOR}
+              maxBarSize={28}
+              isAnimationActive={false}
+            >
+              {barCells}
+            </Bar>
+            <Bar
+              dataKey="invested"
+              stackId="outgoing"
+              fill={INVESTED_COLOR}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
               isAnimationActive={false}
@@ -219,7 +233,7 @@ function DailyTooltip({ active, payload }) {
   return (
     <TooltipBox
       title={formatDate(date)}
-      rows={[{ label: "Spent", value: formatINR(amount), color: EXPENSE_COLOR }]}
+      rows={[{ label: "Spent", value: formatINR(amount), color: SPENDING_COLOR }]}
     />
   );
 }
@@ -240,7 +254,7 @@ function DailyTrend({ daily }) {
           <Line
             type="linear"
             dataKey="amount"
-            stroke={EXPENSE_COLOR}
+            stroke={SPENDING_COLOR}
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4, stroke: "var(--card)", strokeWidth: 2 }}
@@ -261,7 +275,7 @@ export function Charts({ stats, monthly, range }) {
         <CategoryDonut categories={stats.byCategory} total={stats.totals.spending} />
       </ChartCard>
       <ChartCard
-        title="Monthly income vs expense"
+        title="Monthly income vs spending and investing"
         description="All months, with the selected period highlighted"
       >
         <MonthlyBars monthly={monthly} range={range} />

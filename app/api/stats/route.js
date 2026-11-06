@@ -13,6 +13,8 @@ function groupTotals(items, field) {
     .sort((a, b) => b.amount - a.amount);
 }
 
+const roundPaise = (amount) => Math.round(amount * 100) / 100;
+
 function monthlyTotals(docs) {
   if (docs.length === 0) return [];
 
@@ -27,11 +29,10 @@ function monthlyTotals(docs) {
     const date = new Date(Date.UTC(firstYear, firstMonth - 1 + i, 1));
     const month = date.toISOString().slice(0, 7);
     const group = byMonth.get(month) ?? [];
-    result.push({
-      month,
-      income: sumAmounts(group.filter((doc) => doc.type === "income")),
-      expense: sumAmounts(group.filter((doc) => doc.type === "expense")),
-    });
+    const income = sumAmounts(group.filter((doc) => doc.type === "income"));
+    const spending = sumAmounts(group.filter(isSpending));
+    const invested = sumAmounts(group.filter(isInvestment));
+    result.push({ month, income, spending, invested, net: roundPaise(income - spending) });
     if (month === last) return result;
   }
 }
@@ -70,7 +71,7 @@ export const GET = route(async (request) => {
   const spending = sumAmounts(spendingDocs);
   const invested = sumAmounts(docs.filter(isInvestment));
   // Invested money is still saved, so only spending reduces net savings.
-  const net = Math.round((income - spending) * 100) / 100;
+  const net = roundPaise(income - spending);
 
   return Response.json({
     totals: {
