@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { Charts } from "@/components/charts";
 import { DatePicker } from "@/components/date-picker";
+import { MonthComparison } from "@/components/month-comparison";
 import { SummaryCards } from "@/components/summary-cards";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { TransactionsTable } from "@/components/transactions-table";
@@ -237,6 +238,7 @@ export function Dashboard() {
 
       <SummaryCards totals={stats?.totals} />
       <Charts stats={stats} monthly={allTimeStats?.monthly} range={range} />
+      <MonthComparison range={range} refreshKey={refreshKey} />
       <TransactionsTable
         range={range}
         refreshKey={refreshKey}
