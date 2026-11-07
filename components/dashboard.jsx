@@ -65,6 +65,7 @@ export function Dashboard() {
   const [importing, setImporting] = useState(false);
   const [backup, setBackup] = useState({ lastBackup: null, error: null });
   const [backingUp, setBackingUp] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileInput = useRef(null);
 
   const range = useMemo(
@@ -117,6 +118,18 @@ export function Dashboard() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const { file, folder } = await sendJson("/api/export", "POST", {});
+      toast.success("Export saved", { description: `${folder}/${file}` });
+    } catch (err) {
+      toast.error("Export failed", { description: err.message });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function handleImport(event) {
     const file = event.target.files?.[0];
     event.target.value = ""; // so picking the same file again still fires
@@ -161,11 +174,9 @@ export function Dashboard() {
             <Plus />
             Add Transaction
           </Button>
-          <Button variant="outline" asChild>
-            <a href="/api/export" download>
-              <Download />
-              Export Backup
-            </a>
+          <Button variant="outline" disabled={exporting} onClick={handleExport}>
+            {exporting ? <Loader2 className="animate-spin" /> : <Download />}
+            Export Backup
           </Button>
           <Button variant="outline" disabled={importing} onClick={() => fileInput.current.click()}>
             {importing ? <Loader2 className="animate-spin" /> : <Upload />}

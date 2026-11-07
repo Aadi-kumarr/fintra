@@ -34,8 +34,10 @@ the dashboard loads after the server starts, Fintra writes
 exact name pattern are removed, and nothing else in the folder is touched. If a backup fails, a
 warning appears at the top of the dashboard.
 
-**Export button.** Click **Export Backup** in the header. This downloads
-`fintra-backup-YYYY-MM-DD.json` in the same format as `data/fintra-backup.json`.
+**Export button.** Click **Export Backup** in the header. This saves
+`fintra-backup-YYYY-MM-DD_HH-mm.json` to the `backups/` folder in the project, in the same format as
+`data/fintra-backup.json`. Exports are never removed automatically. The folder is listed in
+`.gitignore`, so your transactions stay out of git.
 
 **mongodump.** This needs the separate
 [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools) install:
